@@ -4,9 +4,34 @@ const chart = $('chart');
 const W = 1000, H = 610, M = { left:86, right:38, top:32, bottom:75 };
 let sheets = {}, original = [], current = [], xKey = '', yKey = '', dragging = null;
 
+// 英文界面中，Excel 的案例名和变量名也会显示为对应英文；数据本身保持不变。
+const englishSheetNames = {
+  '1.海拔-气温': '1. Altitude–Temperature',
+  '2.冰淇淋-空调销量': '2. Ice Cream–Air Conditioner Sales',
+  '3.年龄-握力': '3. Age–Grip Strength',
+  '4.酒精浓度-反应时间': '4. Blood Alcohol Concentration–Reaction Time',
+  '5.身高-体重': '5. Height–Weight',
+  '身高-体重分析': 'Height–Weight Analysis',
+  '6.鞋码-GPA': '6. Shoe Size–GPA',
+  '7.计算机使用-学习效果': '7. Computer Use–Learning Outcomes',
+  '8.学习时长-考试成绩': '8. Study Time–Exam Score',
+};
+const englishVariableNames = {
+  '性别': 'Gender', '海拔高度 (m)': 'Altitude (m)', '气温 (°C)': 'Temperature (°C)',
+  '冰淇淋销量 (件/周)': 'Ice Cream Sales (units/week)', '空调销量 (台/周)': 'Air Conditioner Sales (units/week)',
+  '年龄 (岁)': 'Age (years)', '握力 (kg)': 'Grip Strength (kg)',
+  '血液酒精浓度 (%)': 'Blood Alcohol Concentration (%)', '反应时间 (秒)': 'Reaction Time (seconds)',
+  '身高 (cm)': 'Height (cm)', '体重 (kg)': 'Weight (kg)', '身高（in)': 'Height (in)', '体重（lb)': 'Weight (lb)',
+  '鞋码 (码)': 'Shoe Size', '平均学分绩点 (GPA)': 'Grade Point Average (GPA)',
+  '每周计算机使用时长 (小时)': 'Weekly Computer Use (hours)', '学习效果综合评分': 'Learning Outcome Score',
+  '每周学习时长 (小时)': 'Weekly Study Time (hours)', '期末考试成绩 (分)': 'Final Exam Score',
+  'zx': 'Standardized Height (zx)', 'zy': 'Standardized Weight (zy)', 'Unnamed: 7': 'Product of z-scores',
+};
+
 const translations = {
   zh: {
     brand: 'AP Stats Hub',
+    sidebar_title: '学习工具',
     nav_linreg: '线性回归教学',
     heading_title: '线性回归教学',
     heading_desc: '拖动数据点，观察最佳拟合线、相关系数与 R² 的变化。',
@@ -26,9 +51,15 @@ const translations = {
     load_error_hint: '无法读取数据文件。请确认 linear-regression-data.xlsx 与 index.html 位于同一文件夹。',
     lang_button: 'EN',
     empty_chart: '没有数据点，请点击“重置数据”。',
+    controls_aria: '控制面板',
+    chart_aria: '互动散点图',
+    best_fit_line: '最佳拟合直线',
+    slope: '斜率',
+    intercept: '截距',
   },
   en: {
     brand: 'AP Stats Hub',
+    sidebar_title: 'Learning tools',
     nav_linreg: 'Linear Regression',
     heading_title: 'Linear Regression Tutorial',
     heading_desc: 'Drag the data points and watch the best-fit line, correlation, and R² update live.',
@@ -48,6 +79,11 @@ const translations = {
     load_error_hint: 'Could not read the data file. Make sure linear-regression-data.xlsx is in the same folder as index.html.',
     lang_button: '中文',
     empty_chart: 'No data points — click "Reset data".',
+    controls_aria: 'Controls',
+    chart_aria: 'Interactive scatterplot',
+    best_fit_line: 'Best-Fit Line',
+    slope: 'Slope',
+    intercept: 'Intercept',
   },
 };
 let lang = localStorage.getItem('apstats-lang') || 'zh';
@@ -55,7 +91,10 @@ function applyLang() {
   document.documentElement.lang = lang === 'zh' ? 'zh-CN' : 'en';
   const t = translations[lang];
   document.querySelectorAll('[data-i18n]').forEach(el => { if (t[el.dataset.i18n] !== undefined) el.textContent = t[el.dataset.i18n]; });
+  document.querySelectorAll('[data-i18n-aria]').forEach(el => { if (t[el.dataset.i18nAria] !== undefined) el.setAttribute('aria-label', t[el.dataset.i18nAria]); });
+  document.title = lang === 'zh' ? 'AP Stats Hub · 线性回归教学' : 'AP Stats Hub · Linear Regression';
   $('langToggle').textContent = t.lang_button;
+  refreshSelectLabels();
   render();
 }
 function setLang(l) { lang = l; localStorage.setItem('apstats-lang', l); applyLang(); }
@@ -65,16 +104,32 @@ function numericColumns(rows) {
   if (!rows.length) return [];
   return Object.keys(rows[0]).filter(k => rows.some(r => Number.isFinite(Number(r[k]))));
 }
-function setOptions(select, values, selection) {
-  select.innerHTML = values.map(v => `<option value="${escapeHtml(v)}">${escapeHtml(v)}</option>`).join('');
+function displaySheetName(name) { return lang === 'en' ? (englishSheetNames[name] || name) : name; }
+function displayVariableName(name) {
+  if (lang !== 'en') return name;
+  // SheetJS may add _1, _2 to repeated Excel headers; retain the English base label.
+  const base = name.replace(/_\d+$/, '');
+  return englishVariableNames[name] || englishVariableNames[base] || name;
+}
+function setOptions(select, values, selection, labeler = v => v) {
+  select.innerHTML = values.map(v => `<option value="${escapeHtml(v)}">${escapeHtml(labeler(v))}</option>`).join('');
   if (selection && values.includes(selection)) select.value = selection;
+}
+function refreshSelectLabels() {
+  if (!Object.keys(sheets).length) return;
+  const selectedSheet = $('sheetSelect').value;
+  setOptions($('sheetSelect'), Object.keys(sheets), selectedSheet, displaySheetName);
+  const rows = sheets[selectedSheet] || [];
+  const cols = numericColumns(rows);
+  setOptions($('xSelect'), cols, xKey, displayVariableName);
+  setOptions($('ySelect'), cols, yKey, displayVariableName);
 }
 function escapeHtml(v) { return String(v).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c])); }
 function loadSheet(name) {
   const rows = sheets[name] || [];
   const cols = numericColumns(rows);
-  setOptions($('xSelect'), cols, cols[0]);
-  setOptions($('ySelect'), cols, cols[1] || cols[0]);
+  setOptions($('xSelect'), cols, cols[0], displayVariableName);
+  setOptions($('ySelect'), cols, cols[1] || cols[0], displayVariableName);
   xKey = $('xSelect').value; yKey = $('ySelect').value;
   original = rows.map(r => ({ x:Number(r[xKey]), y:Number(r[yKey]) })).filter(p => Number.isFinite(p.x) && Number.isFinite(p.y));
   current = original.map(p => ({...p})); render();
@@ -105,9 +160,9 @@ function render() {
   const fit = regression(current); $('count').textContent = `${t.count_label}${current.length}`;
   if (fit && $('fitToggle').checked) {
     const sign = fit.intercept >= 0 ? '+' : '−';
-    $('equation').textContent = `Best Fit Line: ŷ = ${fit.slope.toFixed(4)}x ${sign} ${Math.abs(fit.intercept).toFixed(4)}`;
-    $('metrics').textContent = `R: ${fit.r.toFixed(4)}　|　R²: ${fit.r2.toFixed(4)}　|　Slope: ${fit.slope.toFixed(4)}　|　Intercept: ${fit.intercept.toFixed(4)}`;
-  } else { $('equation').textContent = 'Best Fit Line: —'; $('metrics').textContent = current.length < 2 ? t.metrics_need_points : t.metrics_hidden; }
+    $('equation').textContent = `${t.best_fit_line}: ŷ = ${fit.slope.toFixed(4)}x ${sign} ${Math.abs(fit.intercept).toFixed(4)}`;
+    $('metrics').textContent = `R: ${fit.r.toFixed(4)}　|　R²: ${fit.r2.toFixed(4)}　|　${t.slope}: ${fit.slope.toFixed(4)}　|　${t.intercept}: ${fit.intercept.toFixed(4)}`;
+  } else { $('equation').textContent = `${t.best_fit_line}: —`; $('metrics').textContent = current.length < 2 ? t.metrics_need_points : t.metrics_hidden; }
   if (!current.length) { chart.innerHTML = `<text x="500" y="300" text-anchor="middle" class="axis-label">${escapeHtml(t.empty_chart)}</text>`; return; }
   const dx=domain(current.map(p=>p.x)), dy=domain(current.map(p=>p.y)); const sx=v=>scale(v,dx,M.left,W-M.right), sy=v=>scale(v,dy,H-M.bottom,M.top);
   let html='';
@@ -115,7 +170,7 @@ function render() {
   ticks(dy[0],dy[1]).forEach(v=>{const y=sy(v); html+=`<line class="grid" x1="${M.left}" y1="${y}" x2="${W-M.right}" y2="${y}"/><text class="tick" x="${M.left-12}" y="${y+5}" text-anchor="end">${fmt(v)}</text>`;});
   html+=`<line class="axis" x1="${M.left}" y1="${H-M.bottom}" x2="${W-M.right}" y2="${H-M.bottom}"/><line class="axis" x1="${M.left}" y1="${M.top}" x2="${M.left}" y2="${H-M.bottom}"/>`;
   if (fit && $('fitToggle').checked) { const x1=dx[0],x2=dx[1]; html+=`<line class="fit-line" x1="${sx(x1)}" y1="${sy(fit.slope*x1+fit.intercept)}" x2="${sx(x2)}" y2="${sy(fit.slope*x2+fit.intercept)}"/>`; }
-  html+=`<text class="axis-label" x="${(M.left+W-M.right)/2}" y="${H-18}" text-anchor="middle">${escapeHtml(xKey)}</text><text class="axis-label" transform="translate(22 ${(M.top+H-M.bottom)/2}) rotate(-90)" text-anchor="middle">${escapeHtml(yKey)}</text>`;
+  html+=`<text class="axis-label" x="${(M.left+W-M.right)/2}" y="${H-18}" text-anchor="middle">${escapeHtml(displayVariableName(xKey))}</text><text class="axis-label" transform="translate(22 ${(M.top+H-M.bottom)/2}) rotate(-90)" text-anchor="middle">${escapeHtml(displayVariableName(yKey))}</text>`;
   current.forEach((p,i)=>html+=`<circle class="point${deleteMode?' delete':''}" data-index="${i}" cx="${sx(p.x)}" cy="${sy(p.y)}" r="6"/>`); chart.innerHTML=html;
   chart.querySelectorAll('.point').forEach(el=>el.addEventListener('mousedown', event=> {
     event.preventDefault(); event.stopPropagation(); const i=Number(el.dataset.index);
@@ -130,5 +185,5 @@ $('sheetSelect').addEventListener('change', e=>loadSheet(e.target.value)); $('xS
 applyLang();
 fetch('linear-regression-data.xlsx').then(r=>r.arrayBuffer()).then(buffer=>{
   const book=XLSX.read(buffer,{type:'array'}); book.SheetNames.forEach(name=>{sheets[name]=XLSX.utils.sheet_to_json(book.Sheets[name],{defval:null});});
-  setOptions($('sheetSelect'),book.SheetNames,book.SheetNames[0]); $('sheetSelect').disabled=false; $('xSelect').disabled=false; $('ySelect').disabled=false; loadSheet(book.SheetNames[0]);
+  setOptions($('sheetSelect'),book.SheetNames,book.SheetNames[0],displaySheetName); $('sheetSelect').disabled=false; $('xSelect').disabled=false; $('ySelect').disabled=false; loadSheet(book.SheetNames[0]);
 }).catch(()=>{ $('sheetSelect').innerHTML=`<option>${translations[lang].load_error_option}</option>`; $('hint').className='hint danger'; $('hint').textContent=translations[lang].load_error_hint; });

@@ -12,14 +12,14 @@
   <header class="site-header"><div class="brand" data-i18n="brand">AP Stats Hub</div><button id="langToggle" class="lang-toggle" type="button">EN</button></header>
   <div class="layout">
     <aside class="sidebar">
-      <div class="sidebar-title">学习工具</div>
+      <div class="sidebar-title" data-i18n="sidebar_title">学习工具</div>
       <button class="nav-item active" type="button" data-i18n="nav_linreg">线性回归教学</button>
     </aside>
     <main class="content">
       <div class="page-heading">
         <div><h1 data-i18n="heading_title">线性回归教学</h1><p data-i18n="heading_desc">拖动数据点，观察最佳拟合线、相关系数与 R² 的变化。</p></div>
       </div>
-      <section class="controls" aria-label="控制面板">
+      <section class="controls" data-i18n-aria="controls_aria" aria-label="控制面板">
         <label><span data-i18n="label_sheet">选择案例</span>
           <select id="sheetSelect" disabled><option data-i18n="loading">正在读取数据…</option></select>
         </label>
@@ -39,7 +39,7 @@
         <div id="metrics">R: —　|　R²: —　|　Slope: —　|　Intercept: —</div>
         <div id="count" class="count">数据点：0</div>
       </section>
-      <section class="chart-card"><svg id="chart" viewBox="0 0 1000 610" role="img" aria-label="互动散点图"></svg></section>
+      <section class="chart-card"><svg id="chart" viewBox="0 0 1000 610" role="img" data-i18n-aria="chart_aria" aria-label="互动散点图"></svg></section>
     </main>
   </div>
   <footer><span>© 2026</span><span>liuqin@shsid.org</span></footer>
