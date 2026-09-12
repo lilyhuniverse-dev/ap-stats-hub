@@ -33,7 +33,7 @@ const translations = {
     brand: 'AP Stats Hub',
     sidebar_title: '学习工具',
     nav_linreg: '线性回归教学',
-    heading_title: '线性回归教学',
+    heading_title: '相关关系探究',
     heading_desc: '拖动数据点，观察最佳拟合线、相关系数与 R² 的变化。',
     label_sheet: '选择案例',
     label_x: 'X 变量',
@@ -61,7 +61,7 @@ const translations = {
     brand: 'AP Stats Hub',
     sidebar_title: 'Learning tools',
     nav_linreg: 'Linear Regression',
-    heading_title: 'Linear Regression Tutorial',
+    heading_title: 'Correlation Explorer',
     heading_desc: 'Drag the data points and watch the best-fit line, correlation, and R² update live.',
     label_sheet: 'Select dataset',
     label_x: 'X variable',
@@ -92,10 +92,11 @@ function applyLang() {
   const t = translations[lang];
   document.querySelectorAll('[data-i18n]').forEach(el => { if (t[el.dataset.i18n] !== undefined) el.textContent = t[el.dataset.i18n]; });
   document.querySelectorAll('[data-i18n-aria]').forEach(el => { if (t[el.dataset.i18nAria] !== undefined) el.setAttribute('aria-label', t[el.dataset.i18nAria]); });
-  document.title = lang === 'zh' ? 'AP Stats Hub · 线性回归教学' : 'AP Stats Hub · Linear Regression';
+  document.title = `AP Stats Hub · ${t.heading_title}`;
   $('langToggle').textContent = t.lang_button;
   refreshSelectLabels();
   render();
+  document.dispatchEvent(new Event('apstats:language'));
 }
 function setLang(l) { lang = l; localStorage.setItem('apstats-lang', l); applyLang(); }
 $('langToggle').addEventListener('click', () => setLang(lang === 'zh' ? 'en' : 'zh'));
@@ -186,4 +187,5 @@ applyLang();
 fetch('linear-regression-data.xlsx').then(r=>r.arrayBuffer()).then(buffer=>{
   const book=XLSX.read(buffer,{type:'array'}); book.SheetNames.forEach(name=>{sheets[name]=XLSX.utils.sheet_to_json(book.Sheets[name],{defval:null});});
   setOptions($('sheetSelect'),book.SheetNames,book.SheetNames[0],displaySheetName); $('sheetSelect').disabled=false; $('xSelect').disabled=false; $('ySelect').disabled=false; loadSheet(book.SheetNames[0]);
-}).catch(()=>{ $('sheetSelect').innerHTML=`<option>${translations[lang].load_error_option}</option>`; $('hint').className='hint danger'; $('hint').textContent=translations[lang].load_error_hint; });
+  document.dispatchEvent(new Event('apstats:data'));
+}).catch(()=>{ $('sheetSelect').innerHTML=`<option>${translations[lang].load_error_option}</option>`; $('hint').className='hint danger'; $('hint').textContent=translations[lang].load_error_hint; document.dispatchEvent(new Event('apstats:error')); });
