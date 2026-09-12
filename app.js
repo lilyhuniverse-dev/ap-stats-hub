@@ -33,8 +33,8 @@ const translations = {
     brand: 'AP Stats Hub',
     sidebar_title: '学习工具',
     nav_linreg: '线性回归教学',
-    nav_scatter: '散点图', nav_correlation: '相关关系探究',
-    heading_title: '线性回归教学',
+    nav_scatter: '相关关系探究', nav_correlation: '散点图',
+    heading_title: '相关关系探究',
     heading_desc: '拖动数据点，观察最佳拟合线、相关系数与 R² 的变化。',
     label_sheet: '选择案例',
     label_x: 'X 变量',
@@ -57,7 +57,7 @@ const translations = {
     best_fit_line: '最佳拟合直线',
     slope: '斜率',
     intercept: '截距',
-    corr_title: '相关关系探究', corr_desc: '选择一个数据点，再用拉杆分别调整它的 X 和 Y 值，比较修改前后的散点图。',
+    corr_title: '散点图', corr_desc: '选择一个数据点，再用拉杆分别调整它的 X 和 Y 值，比较修改前后的散点图。',
     corr_reset: '重置变动', corr_slider_heading: '选择并调整一个数据点', corr_point: '数据点', corr_x_value: 'X 值', corr_y_value: 'Y 值',
     corr_hint: '拖动 X 或 Y 拉杆后，右侧图中的对应点会立即移动。', corr_original: '原始数据', corr_changed: '变动后的数据',
     mean: '均值', variance: '方差',
@@ -66,8 +66,8 @@ const translations = {
     brand: 'AP Stats Hub',
     sidebar_title: 'Learning tools',
     nav_linreg: 'Linear Regression',
-    nav_scatter: 'Scatterplot', nav_correlation: 'Correlation Explorer',
-    heading_title: 'Linear Regression Tutorial',
+    nav_scatter: 'Correlation Explorer', nav_correlation: 'Scatterplot',
+    heading_title: 'Correlation Explorer',
     heading_desc: 'Drag the data points and watch the best-fit line, correlation, and R² update live.',
     label_sheet: 'Select dataset',
     label_x: 'X variable',
@@ -90,7 +90,7 @@ const translations = {
     best_fit_line: 'Best-Fit Line',
     slope: 'Slope',
     intercept: 'Intercept',
-    corr_title: 'Correlation Explorer', corr_desc: 'Choose a data point, then use the sliders to adjust its X and Y values and compare the two scatterplots.',
+    corr_title: 'Scatterplot', corr_desc: 'Choose a data point, then use the sliders to adjust its X and Y values and compare the two scatterplots.',
     corr_reset: 'Reset changes', corr_slider_heading: 'Choose and adjust a data point', corr_point: 'Data point', corr_x_value: 'X value', corr_y_value: 'Y value',
     corr_hint: 'Move either slider to see the matching point update immediately in the chart on the right.', corr_original: 'Original data', corr_changed: 'Adjusted data',
     mean: 'Mean', variance: 'Variance',
@@ -102,7 +102,7 @@ function applyLang() {
   const t = translations[lang];
   document.querySelectorAll('[data-i18n]').forEach(el => { if (t[el.dataset.i18n] !== undefined) el.textContent = t[el.dataset.i18n]; });
   document.querySelectorAll('[data-i18n-aria]').forEach(el => { if (t[el.dataset.i18nAria] !== undefined) el.setAttribute('aria-label', t[el.dataset.i18nAria]); });
-  document.title = lang === 'zh' ? 'AP Stats Hub · 线性回归教学' : 'AP Stats Hub · Linear Regression';
+  document.title = lang === 'zh' ? 'AP Stats Hub · 相关关系探究' : 'AP Stats Hub · Correlation Explorer';
   $('langToggle').textContent = t.lang_button;
   refreshSelectLabels();
   render();
