@@ -2,7 +2,7 @@
 * { box-sizing:border-box; }
 body { margin:0; min-width:980px; color:var(--text); font-family:"Segoe UI","Microsoft YaHei",Arial,sans-serif; background:#fff; }
 .site-header { height:72px; padding:0 34px; display:flex; align-items:center; justify-content:space-between; background:var(--navy); color:#fff; }
-.brand { font-size:24px; font-weight:700; letter-spacing:.2px; }.subtitle { font-size:14px; opacity:.78; }
+.brand { font-size:24px; font-weight:700; letter-spacing:.2px; }.lang-toggle { height:34px; padding:0 18px; border:1px solid rgba(255,255,255,.42); border-radius:20px; background:transparent; color:#fff; font:600 13px inherit; letter-spacing:.3px; cursor:pointer; transition:background .15s; }.lang-toggle:hover { background:rgba(255,255,255,.14); }
 .layout { display:flex; min-height:calc(100vh - 120px); }.sidebar { width:205px; flex:0 0 205px; padding:26px 16px; border-right:1px solid var(--line); background:var(--soft); }
 .sidebar-title { margin:0 10px 12px; font-size:12px; font-weight:700; color:#667582; letter-spacing:.7px; }.nav-item { width:100%; border:0; border-radius:6px; padding:12px 13px; text-align:left; color:var(--navy); background:#dfeef9; font:600 14px inherit; }
 .content { width:calc(100% - 205px); max-width:1360px; padding:28px 38px 34px; }.page-heading { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:22px; }.page-heading h1 { margin:0 0 7px; color:var(--navy); font-size:25px; }.page-heading p { margin:0; color:#64717d; font-size:14px; }
